@@ -5,22 +5,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class ChatHouse {
-    List<ChatUser> lobby;
-    List<ChatRoom> chatRooms;
+    private List<ChatUser> lobby;
+    private List<ChatRoom> chatRooms;
     private int roomNumber;
 
     public ChatHouse(){
-        lobby = Collections.synchronizedList(new ArrayList<>());
-        chatRooms = Collections.synchronizedList(new ArrayList<>());
+        lobby = new ArrayList<>();
+        chatRooms = new ArrayList<>();
     }
 
-    public void createRoom(ChatUser chatUser, String title, boolean flag){
+    public synchronized void createRoom(ChatUser chatUser, String title, boolean flag){
         int maxNum = roomNumber++;
         ChatRoom chatRoom = new ChatRoom(chatUser, title, maxNum, flag);
         chatUser.setGrade(1);
         chatRooms.add(chatRoom);
     }
-    public List<ChatRoom> getChatRoom(int roomnumber) {
+    public synchronized List<ChatRoom> getChatRoom(int roomnumber) {
         List<ChatRoom> list = new ArrayList<ChatRoom>();
         for(int i=0; i<chatRooms.size(); i++) {
             ChatRoom chatRoom = chatRooms.get(i);
@@ -31,7 +31,7 @@ public class ChatHouse {
         return list;
     }
 
-    public void setMaster(int roomnumber,String name, int grade) {
+    public synchronized void setMaster(int roomnumber,String name, int grade) {
         List<ChatRoom> list = getChatRoom(roomnumber);
         List<ChatUser> chatUsers = list.get(0).getChatUsers();
         for(ChatUser user:chatUsers) {
@@ -42,7 +42,7 @@ public class ChatHouse {
         }
     }
 
-    public void getOut(String nickname, ChatUser chatUser){
+    public synchronized void getOut(String nickname, ChatUser chatUser){
         List<ChatRoom> list = getChatRoom(chatUser.getRoomNumber());
         List<ChatUser> chatUsers = list.get(0).getChatUsers();
         for(int j=0; j<chatUsers.size(); j++) {
@@ -57,37 +57,34 @@ public class ChatHouse {
     }
 
 
-
-    // ChatUser를 추가
-    public void addChatUser(ChatUser chatUser){
+    /**
+     * 사용자가 처음 접속했을 때 로비에 ChatUser를 추가한다.
+     * 원래는.......
+     * @param chatUser
+     */
+    public synchronized void addChatUser(ChatUser chatUser){
         lobby.add(chatUser);
     }
 
     // exit
-    public void exit(ChatUser chatUser){
+    public synchronized void exit(ChatUser chatUser){
         lobby.remove(chatUser);
     }
 
-    public void printLobby(){
-        for(ChatUser chatUser : lobby){
-            System.out.println(chatUser.getNickname());
-        }
-    }
-
-    public List<ChatUser> getUser(ChatUser chatUser) {
+    public synchronized List<ChatUser> getUser(ChatUser chatUser) {
         for(ChatRoom cr : chatRooms){
             if(cr.existsUser(chatUser)){
                 return cr.getChatUsers();
             }
         }
-        return new ArrayList<ChatUser>();
+        return new ArrayList<>();
     }
 
-    public List<ChatRoom> getChatRooms() {
+    public synchronized List<ChatRoom> getChatRooms() {
         return chatRooms;
     }
 
-    public boolean joinRoom(int roomNum, ChatUser chatUser) {
+    public synchronized boolean joinRoom(int roomNum, ChatUser chatUser) {
         ChatRoom chatRoom = chatRooms.get(roomNum);
         if(chatRoom.isFlag() == true) {
             chatRoom.addChatUser(chatUser);
@@ -101,7 +98,7 @@ public class ChatHouse {
         return chatRoom.isFlag();
     }
 
-    public void outRoom(ChatUser chatUser) {
+    public synchronized void outRoom(ChatUser chatUser) {
         List<ChatRoom> list = getChatRoom(chatUser.getRoomNumber());
         list.get(0).remove(chatUser);
         List<ChatUser> chatUsers = list.get(0).getChatUsers();
@@ -112,14 +109,14 @@ public class ChatHouse {
         }
     }
 
-    public void secretRoom(ChatUser chatUser, String password) {
+    public synchronized void secretRoom(ChatUser chatUser, String password) {
         List<ChatRoom> list = getChatRoom(chatUser.getRoomNumber());
         ChatRoom chatRoom = list.get(0);
         chatRoom.setPassword(password);
         chatRoom.setFlag(false);
     }
 
-    public void invite(String inviteName, int roomNumber){
+    public synchronized void invite(String inviteName, int roomNumber){
         List<ChatRoom> list = getChatRoom(roomNumber);
         ChatRoom chatRoom = list.get(0);
         for(int i=0; i<lobby.size(); i++) {
