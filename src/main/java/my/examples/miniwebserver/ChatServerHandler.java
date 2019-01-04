@@ -1,36 +1,28 @@
 package my.examples.miniwebserver;
-
 import java.net.Socket;
 import java.util.List;
-
 public class ChatServerHandler extends Thread{
     private Socket socket;
     private ChatHouse chatHouse;
     private boolean inRoom;
-
     public ChatServerHandler(Socket socket, ChatHouse chatHouse) {
         this.socket = socket;
         this.chatHouse = chatHouse;
         inRoom = false;
     }
-
     @Override
     public void run() {
         ChatUser chatUser = new ChatUser(socket);
         String nickname = chatUser.read();
         chatUser.setNickname(nickname);
         System.out.println("message : " + nickname);
-
         chatHouse.addChatUser(chatUser);
-
         try {
             while (true) {
                 String message = chatUser.read();
                 System.out.println("message : " + message);
-
                 if(chatUser.getStatus() == 0){ // 로비에 있을 경우
                     List<ChatRoom> chatRooms = chatHouse.getChatRooms();
-
                     if(message.indexOf("/create") == 0) {
                         String title = message.substring(message.indexOf(" ") + 1);
                         boolean flag = true;
@@ -46,10 +38,8 @@ public class ChatServerHandler extends Thread{
                         inRoom = false;
                     } else if(message.indexOf("/join") == 0){
                         String strRoomNum = message.substring(message.indexOf(" ") +1);
-
                         int roomNum = Integer.parseInt(strRoomNum);
                         boolean result = chatHouse.joinRoom(roomNum, chatUser);
-
                         //String ms = String.valueOf(result);
                         //chatUser.write(ms);
                         if(result == true) {
@@ -61,7 +51,6 @@ public class ChatServerHandler extends Thread{
                             chatUser.write("비밀방입니다.");
                             chatUser.setStatus(0);
                         }
-
                     } else if(message.indexOf("/help") == 0) {
                         chatUser.write("1. 채팅방 생성 : /create 방제목");
                         chatUser.write("2. 목록 확인 : /list");
@@ -87,19 +76,23 @@ public class ChatServerHandler extends Thread{
                         chatHouse.addChatUser(chatUser);
                         chatHouse.outRoom(chatUser);
                         chatUser.setStatus(0);
-
-                    } else if (message.indexOf("/password") == 0) {
+                    }else if (message.indexOf("/help") == 0) {// 채팅방에서 사용하는 명령어 목록 출력
+                        chatUser.write("1. 채팅방 나가기 : /out");
+                        chatUser.write("2. 비밀방 생성 : /password password");
+                        chatUser.write("3. 채팅방 방장 설정 : /master name");
+                        chatUser.write("4. 채팅방 강퇴 : /getout name");
+                        chatUser.write("5. 채팅방 초대 : /invite name");
+                    }
+                    else if (message.indexOf("/password") == 0) {
                         String password = message.substring(message.indexOf(" ") + 1);
                         chatHouse.secretRoom(chatUser, password);
                         chatUser.write("비밀방이 설정되셨습니다.");
-
                     } else if (message.indexOf("/master") == 0) {
                         String name = message.substring(message.indexOf(" ") + 1);
                         int roomNum = chatUser.getRoomNumber();
                         int grade = 1;
                         chatHouse.setMaster(roomNum, name, grade);
                         chatUser.setGrade(0);
-
                     } else if(message.indexOf("/getout") == 0) {
                         if (chatUser.getGrade() == 1) {
                             String memName = message.substring(message.indexOf(" ") + 1);
@@ -114,7 +107,7 @@ public class ChatServerHandler extends Thread{
                         chatUser.write(inviteName+"님을 초대하셨습니다.");
                     } else {
                         for(ChatUser cu : chatUsers){
-                          cu.write(chatUser.getNickname() + " : " + message);
+                            cu.write(chatUser.getNickname() + " : " + message);
                         }
                     }
                 }

@@ -1,39 +1,49 @@
 package my.examples.miniwebserver;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 public class ChatHouse {
-    private List<ChatUser> lobby;
-    private List<ChatRoom> chatRooms;
+    List<ChatUser> lobby;
+    List<ChatRoom> chatRooms;
     private int roomNumber;
-
     public ChatHouse(){
-        lobby = new ArrayList<>();
-        chatRooms = new ArrayList<>();
+        lobby = Collections.synchronizedList(new ArrayList<>());
+        chatRooms = Collections.synchronizedList(new ArrayList<>());
     }
-
-    public synchronized void createRoom(ChatUser chatUser, String title, boolean flag){
+    public void createRoom(ChatUser chatUser, String title, boolean flag){
         int maxNum = roomNumber++;
         ChatRoom chatRoom = new ChatRoom(chatUser, title, maxNum, flag);
         chatUser.setGrade(1);
         chatRooms.add(chatRoom);
     }
-    public synchronized List<ChatRoom> getChatRoom(int roomnumber) {
-        List<ChatRoom> list = new ArrayList<ChatRoom>();
+    /**
+     * 불필요한 리스트사용이 있어 리턴타입과 변수사용을 줄였습니다.
+     * List<ChatRoom> list = new getChatRoom(roomnumber);
+     * ChatRoom chatRoom = list.get(0);
+     * 이부분을
+     * ChatRoom chatRoom = getChatRoom(roomnumber)
+     * 으로 바꿧습니다
+     * @param roomnumber
+     * @return
+     */
+    public ChatRoom getChatRoom(int roomnumber) {
         for(int i=0; i<chatRooms.size(); i++) {
             ChatRoom chatRoom = chatRooms.get(i);
             if(chatRoom.getRoomNumber() == roomnumber) {
-                list.add(chatRoom);
+                return chatRoom;
             }
         }
-        return list;
+        return null;
     }
-
-    public synchronized void setMaster(int roomnumber,String name, int grade) {
-        List<ChatRoom> list = getChatRoom(roomnumber);
-        List<ChatUser> chatUsers = list.get(0).getChatUsers();
+    /**
+     * 위와 동일
+     * @param roomnumber
+     * @param name
+     * @param grade
+     */
+    public void setMaster(int roomnumber,String name, int grade) {
+        ChatRoom chatRoom = getChatRoom(roomnumber);
+        List<ChatUser> chatUsers = chatRoom.getChatUsers();
         for(ChatUser user:chatUsers) {
             if(user.getNickname().equals(name)) {
                 user.setGrade(grade);
@@ -41,10 +51,14 @@ public class ChatHouse {
             }
         }
     }
-
-    public synchronized void getOut(String nickname, ChatUser chatUser){
-        List<ChatRoom> list = getChatRoom(chatUser.getRoomNumber());
-        List<ChatUser> chatUsers = list.get(0).getChatUsers();
+    /**
+     * 위와 동일
+     * @param nickname
+     * @param chatUser
+     */
+    public void getOut(String nickname, ChatUser chatUser){
+        ChatRoom chatRoom = getChatRoom(chatUser.getRoomNumber());
+        List<ChatUser> chatUsers = chatRoom.getChatUsers();
         for(int j=0; j<chatUsers.size(); j++) {
             ChatUser user = chatUsers.get(j);
             if (user.getNickname().equals(nickname)) {
@@ -55,36 +69,31 @@ public class ChatHouse {
             }
         }
     }
-
-
-    /**
-     * 사용자가 처음 접속했을 때 로비에 ChatUser를 추가한다.
-     * 원래는.......
-     * @param chatUser
-     */
-    public synchronized void addChatUser(ChatUser chatUser){
+    // ChatUser를 추가
+    public void addChatUser(ChatUser chatUser){
         lobby.add(chatUser);
     }
-
     // exit
-    public synchronized void exit(ChatUser chatUser){
+    public void exit(ChatUser chatUser){
         lobby.remove(chatUser);
     }
-
-    public synchronized List<ChatUser> getUser(ChatUser chatUser) {
+    public void printLobby(){
+        for(ChatUser chatUser : lobby){
+            System.out.println(chatUser.getNickname());
+        }
+    }
+    public List<ChatUser> getUser(ChatUser chatUser) {
         for(ChatRoom cr : chatRooms){
             if(cr.existsUser(chatUser)){
                 return cr.getChatUsers();
             }
         }
-        return new ArrayList<>();
+        return new ArrayList<ChatUser>();
     }
-
-    public synchronized List<ChatRoom> getChatRooms() {
+    public List<ChatRoom> getChatRooms() {
         return chatRooms;
     }
-
-    public synchronized boolean joinRoom(int roomNum, ChatUser chatUser) {
+    public boolean joinRoom(int roomNum, ChatUser chatUser) {
         ChatRoom chatRoom = chatRooms.get(roomNum);
         if(chatRoom.isFlag() == true) {
             chatRoom.addChatUser(chatUser);
@@ -97,28 +106,41 @@ public class ChatHouse {
         }
         return chatRoom.isFlag();
     }
-
-    public synchronized void outRoom(ChatUser chatUser) {
-        List<ChatRoom> list = getChatRoom(chatUser.getRoomNumber());
-        list.get(0).remove(chatUser);
-        List<ChatUser> chatUsers = list.get(0).getChatUsers();
+    public boolean joinPasswordRoom(int roomNum,ChatUser chatUser,String password){
+        ChatRoom chatRoom = chatRooms.get(roomNum);
+        if(chatRoom.getPassword() == null){
+            return joinRoom(roomNum,chatUser);
+        }else if(chatRoom.getPassword() == password){
+            return joinRoom(roomNum,chatUser);
+        }else{
+            return false;
+        }
+    }
+    /**
+     * 위와 동일
+     * @param chatUser
+     */
+    public void outRoom(ChatUser chatUser) {
+        ChatRoom chatRoom = getChatRoom(chatUser.getRoomNumber());
+        chatRoom.remove(chatUser);
+        List<ChatUser> chatUsers = chatRoom.getChatUsers();
         for(ChatUser member : chatUsers) {
             if(!member.equals(chatUser.getNickname())) {
                 member.write(chatUser.getNickname()+"님이 나가셨습니다.");
             }
         }
     }
-
-    public synchronized void secretRoom(ChatUser chatUser, String password) {
-        List<ChatRoom> list = getChatRoom(chatUser.getRoomNumber());
-        ChatRoom chatRoom = list.get(0);
+    public void secretRoom(ChatUser chatUser, String password) {
+        ChatRoom chatRoom = getChatRoom(chatUser.getRoomNumber());
         chatRoom.setPassword(password);
-        chatRoom.setFlag(false);
     }
-
-    public synchronized void invite(String inviteName, int roomNumber){
-        List<ChatRoom> list = getChatRoom(roomNumber);
-        ChatRoom chatRoom = list.get(0);
+    /**
+     * 위와 동일
+     * @param inviteName
+     * @param roomNumber
+     */
+    public void invite(String inviteName, int roomNumber){
+        ChatRoom chatRoom = getChatRoom(roomNumber);
         for(int i=0; i<lobby.size(); i++) {
             ChatUser member = lobby.get(i);
             if(member.getNickname().equals(inviteName)) {
