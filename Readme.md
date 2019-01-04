@@ -16,6 +16,8 @@
 * Socket 통신
 * 공유객체
 
+<img src="https://user-images.githubusercontent.com/26241008/50674376-0ed42b00-1029-11e9-97c7-e817364fdbd4.png"/>
+
 # 구조
 
 1) 채팅서버
