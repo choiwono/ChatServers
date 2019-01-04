@@ -1,4 +1,4 @@
-# ChatServer 구현
+# 채팅서버 구현
 
 조명 : 고구마라떼조
 
@@ -22,19 +22,17 @@
 
 1) 채팅서버
 
-- ChatHouse
-- ChatRoom
-- ChatServer
-- ChatServerHandler
-- ChatServerMain
-- ChatUser
+- ChatHouse : 채팅서버의 자료구조, 채팅방과 채팅유저를 포함함.
+- ChatServer : 서버 핸들러를 통해서 통신
+- ChatServerHandler : 서버에서 작동하는 기능에 대해서 정의 
+- ChatServerMain : 메인 실행 클래스
 
 2) 채팅클라이언트
 
-- ChatClient
-- ChatClientHandler
-- ChatClientMain
-- ChatUser
+- ChatClient : 채팅 핸들러를 통해서 통신
+- ChatClientHandler : 클라이언트에서 작동하는 기능에 대해서 정의
+- ChatClientMain : 메인 실행 클래스
+
 
 ## 구조적인 문제점
 
